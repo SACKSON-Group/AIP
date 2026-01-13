@@ -1,3 +1,11 @@
+#cryptography==44.0.0  # Choose one version based on your packages (e.g., for pyopenssl compatibility)
+# Remove duplicate or conflicting lines for cryptography
+# Keep other packages like fastapi, uvicorn, sqlalchemy
+#pillow==10.3.0  # Compatible with moviepy
+#cryptography==44.0.0  # Compatible with pyopenssl
+#moviepy==2.1.1
+#pyopenssl==24.3.0
+# Add your other packages like fastapi, uvicorn, sqlalchemy, psycopg2-binary
 annotated-doc==0.0.4
 annotated-types==0.7.0
 anyio==4.12.0
@@ -52,3 +60,6 @@ typing_extensions==4.15.0
 urllib3==2.6.2
 uvicorn==0.40.0
 websockets==15.0.1
+cryptography==46.0.3  # Choose one version to reduce conflict risks
+# Keep other packages like fastapi, uvicorn, sqlalchemy
+

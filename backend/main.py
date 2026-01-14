@@ -16,9 +16,16 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from fastapi.security import OAuth2PasswordBearer
+import os
 from elasticsearch import Elasticsearch
-es = Elasticsearch("http://localhost:9200")
 import redis
+
+ES_URL = os.getenv("ELASTICSEARCH_URL")  # e.g. https://...
+REDIS_URL = os.getenv("REDIS_URL")       # e.g. redis://...
+
+es = Elasticsearch(ES_URL) if ES_URL else None
+r = redis.Redis.from_url(REDIS_URL) if REDIS_URL else None
+
 import json
 
 r = redis.Redis(host='localhost', port=6379, db=0)

@@ -1,9 +1,9 @@
-# backend/database.py
+cat > database.py <<'PY'
 """
 SQLAlchemy database setup.
 
-This module intentionally has NO localhost fallback.
-It reads SQLALCHEMY_DATABASE_URL or DATABASE_URL from environment.
+Reads SQLALCHEMY_DATABASE_URL or DATABASE_URL from environment.
+No localhost fallback.
 """
 
 from __future__ import annotations
@@ -15,19 +15,18 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 
-def _get_database_url() -> str:
+def get_database_url() -> str:
     url = os.getenv("SQLALCHEMY_DATABASE_URL") or os.getenv("DATABASE_URL")
     if not url:
         raise RuntimeError("DATABASE_URL (or SQLALCHEMY_DATABASE_URL) is not set")
 
-    # SQLAlchemy prefers explicit driver; keep sqlite working too.
     if url.startswith("postgresql://"):
         return "postgresql+psycopg2://" + url.removeprefix("postgresql://")
 
     return url
 
 
-DATABASE_URL = _get_database_url()
+DATABASE_URL = get_database_url()
 
 engine = create_engine(
     DATABASE_URL,
@@ -45,3 +44,4 @@ def get_db() -> Generator:
         yield db
     finally:
         db.close()
+PY

@@ -1,5 +1,3 @@
-cat > database.py <<'PY'
-"""
 SQLAlchemy database setup.
 
 Reads SQLALCHEMY_DATABASE_URL or DATABASE_URL from environment.

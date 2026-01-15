@@ -1,3 +1,6 @@
+Pydantic schemas for API IO.
+"""
+
 from __future__ import annotations
 
 from datetime import date, datetime
@@ -39,19 +42,17 @@ class ProjectBase(BaseModel):
     financial_model_url: Optional[str] = None
     concession_summary_url: Optional[str] = None
 
-    verification_level: Optional[int] = 0
-    bankability_score: Optional[float] = 0.0
-    last_verified: Optional[datetime] = None
-
 
 class ProjectCreate(ProjectBase):
-    # For creating a project, require at least the name
     name: str = Field(..., min_length=1)
 
 
 class Project(ProjectBase):
-    # Response model
     id: int
+    verification_level: int = 0
+    bankability_score: float = 0.0
+    last_verified: Optional[datetime] = None
     created_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
+PY

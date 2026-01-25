@@ -3,7 +3,8 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-from fastapi.testclient import TestClient
+import httpx
+from starlette.testclient import TestClient
 
 from backend.database import Base, get_db
 from backend.main import app
@@ -42,8 +43,19 @@ def client(db_session):
             pass
 
     app.dependency_overrides[get_db] = override_get_db
-    test_client = TestClient(app)
+
+    # Use httpx with ASGITransport for newer httpx versions
+    try:
+        transport = httpx.ASGITransport(app=app)
+        test_client = httpx.Client(transport=transport, base_url="http://test")
+    except (AttributeError, TypeError):
+        # Fallback for older versions
+        test_client = TestClient(app)
+
     yield test_client
+
+    if hasattr(test_client, 'close'):
+        test_client.close()
     app.dependency_overrides.clear()
 
 

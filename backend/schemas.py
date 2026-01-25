@@ -2,16 +2,15 @@
 from datetime import date, datetime
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict
-from backend.models import Sector, ProjectStage, VerificationLevel, Instrument
 
 
 class ProjectBase(BaseModel):
     name: str = Field(..., description="Project name")
-    sector: Sector
+    sector: str  # Accept string values like "Energy", "Mining", etc.
     country: str
     region: Optional[str] = None
     gps_location: Optional[str] = None
-    stage: ProjectStage
+    stage: str  # Accept string values like "Concept", "Feasibility", etc.
     estimated_capex: float
     funding_gap: Optional[float] = None
     timeline_fid: Optional[date] = None
@@ -55,7 +54,7 @@ class BankabilityScore(BaseModel):
 
 
 class VerificationBase(BaseModel):
-    level: VerificationLevel
+    level: str  # Accept string values like "V0: Submitted"
     bankability: Optional[BankabilityScore] = None
 
 
@@ -76,10 +75,10 @@ class InvestorBase(BaseModel):
     aum: Optional[float] = None
     ticket_size_min: float
     ticket_size_max: float
-    instruments: List[Instrument]
+    instruments: List[str]  # Accept string values like ["Equity", "Debt"]
     target_irr: Optional[float] = None
     country_focus: List[str]
-    sector_focus: List[Sector]
+    sector_focus: List[str]  # Accept string values like ["Energy", "Mining"]
     esg_constraints: Optional[str] = None
 
 
@@ -136,7 +135,7 @@ class DataRoom(DataRoomBase):
 
 class AnalyticReportBase(BaseModel):
     title: str
-    sector: Optional[Sector] = None
+    sector: Optional[str] = None  # Accept string values like "Energy"
     country: Optional[str] = None
     content: str
 

@@ -11,10 +11,10 @@ router = APIRouter(prefix="/investors", tags=["investors"])
 def _serialize_investor(investor: InvestorCreate) -> dict:
     """Convert Pydantic model with lists to dict with comma-separated strings."""
     data = investor.model_dump()
-    # Convert enum lists to comma-separated strings
-    data["instruments"] = ",".join(i.value for i in investor.instruments)
+    # Convert string lists to comma-separated strings
+    data["instruments"] = ",".join(investor.instruments)
     data["country_focus"] = ",".join(investor.country_focus)
-    data["sector_focus"] = ",".join(s.value for s in investor.sector_focus)
+    data["sector_focus"] = ",".join(investor.sector_focus)
     return data
 
 
@@ -26,10 +26,10 @@ def _deserialize_investor(db_inv: models.Investor) -> Investor:
         aum=db_inv.aum,
         ticket_size_min=db_inv.ticket_size_min,
         ticket_size_max=db_inv.ticket_size_max,
-        instruments=[models.Instrument(i) for i in db_inv.instruments.split(",")] if db_inv.instruments else [],
+        instruments=db_inv.instruments.split(",") if db_inv.instruments else [],
         target_irr=db_inv.target_irr,
         country_focus=db_inv.country_focus.split(",") if db_inv.country_focus else [],
-        sector_focus=[models.Sector(s) for s in db_inv.sector_focus.split(",")] if db_inv.sector_focus else [],
+        sector_focus=db_inv.sector_focus.split(",") if db_inv.sector_focus else [],
         esg_constraints=db_inv.esg_constraints
     )
 

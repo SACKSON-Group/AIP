@@ -10,13 +10,35 @@ from backend import models
 router = APIRouter(prefix="/projects", tags=["projects"])
 
 
+def _get_sector_enum(sector_str: str) -> models.Sector:
+    """Convert sector string to enum."""
+    # Try matching by value first (e.g., "Energy")
+    for s in models.Sector:
+        if s.value == sector_str:
+            return s
+    # Try matching by name (e.g., "ENERGY")
+    try:
+        return models.Sector[sector_str.upper()]
+    except KeyError:
+        raise HTTPException(status_code=422, detail=f"Invalid sector: {sector_str}")
+
+
+def _get_stage_enum(stage_str: str) -> models.ProjectStage:
+    """Convert stage string to enum."""
+    for s in models.ProjectStage:
+        if s.value == stage_str:
+            return s
+    try:
+        return models.ProjectStage[stage_str.upper()]
+    except KeyError:
+        raise HTTPException(status_code=422, detail=f"Invalid stage: {stage_str}")
+
+
 def _serialize_project(project: ProjectCreate) -> dict:
-    """Convert Pydantic model to dict with serialized complex types."""
+    """Convert Pydantic model to dict with proper enum types."""
     data = project.model_dump()
-    # Convert enum to value string
-    data["sector"] = project.sector.value if hasattr(project.sector, 'value') else project.sector
-    data["stage"] = project.stage.value if hasattr(project.stage, 'value') else project.stage
-    # Convert dict to JSON string
+    data["sector"] = _get_sector_enum(project.sector)
+    data["stage"] = _get_stage_enum(project.stage)
     data["attachments"] = json.dumps(project.attachments) if project.attachments else None
     return data
 
@@ -24,14 +46,18 @@ def _serialize_project(project: ProjectCreate) -> dict:
 def _deserialize_project(db_project: models.Project) -> Project:
     """Convert database model to Pydantic model."""
     attachments = json.loads(db_project.attachments) if db_project.attachments else None
+    # Get string value from enum
+    sector_val = db_project.sector.value if hasattr(db_project.sector, 'value') else str(db_project.sector)
+    stage_val = db_project.stage.value if hasattr(db_project.stage, 'value') else str(db_project.stage)
+
     return Project(
         id=db_project.id,
         name=db_project.name,
-        sector=db_project.sector,
+        sector=sector_val,
         country=db_project.country,
         region=db_project.region,
         gps_location=db_project.gps_location,
-        stage=db_project.stage,
+        stage=stage_val,
         estimated_capex=db_project.estimated_capex,
         funding_gap=db_project.funding_gap,
         timeline_fid=db_project.timeline_fid,
@@ -87,11 +113,11 @@ def list_projects(
     query = db.query(models.Project)
 
     if sector:
-        query = query.filter(models.Project.sector == sector)
+        query = query.filter(models.Project.sector == _get_sector_enum(sector))
     if country:
         query = query.filter(models.Project.country == country)
     if stage:
-        query = query.filter(models.Project.stage == stage)
+        query = query.filter(models.Project.stage == _get_stage_enum(stage))
 
     db_projects = query.offset(skip).limit(limit).all()
     return [_deserialize_project(p) for p in db_projects]

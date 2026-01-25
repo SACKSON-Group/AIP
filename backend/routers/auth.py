@@ -2,17 +2,35 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from backend.schemas import UserCreate, User, Token
-from backend.crud import create_user, authenticate_user
-from backend.auth import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
+from backend.crud import authenticate_user
+from backend.auth import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES, get_password_hash
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
 from backend.database import get_db
+from backend import models
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+
 @router.post("/users/", response_model=User)
 def create_user_route(user: UserCreate, db: Session = Depends(get_db)):
-    return create_user(db, user)
+    """Create a new user with hashed password."""
+    # Hash the password before storing
+    hashed_password = get_password_hash(user.password)
+    db_user = models.User(
+        username=user.username,
+        hashed_password=hashed_password,
+        role=user.role
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return User(
+        id=db_user.id,
+        username=db_user.username,
+        role=db_user.role
+    )
+
 
 @router.post("/token", response_model=Token)
 def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):

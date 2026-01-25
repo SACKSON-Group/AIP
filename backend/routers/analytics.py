@@ -8,21 +8,34 @@ from backend import models
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
 
+def _get_sector_enum(sector_str: str) -> models.Sector:
+    """Convert sector string to enum."""
+    for s in models.Sector:
+        if s.value == sector_str:
+            return s
+    try:
+        return models.Sector[sector_str.upper()]
+    except KeyError:
+        raise HTTPException(status_code=422, detail=f"Invalid sector: {sector_str}")
+
+
 def _serialize_report(report: AnalyticReportCreate) -> dict:
-    """Convert Pydantic model to dict with serialized complex types."""
+    """Convert Pydantic model to dict with proper enum types."""
     data = report.model_dump()
-    # Convert enum to value string if present
     if report.sector:
-        data["sector"] = report.sector.value if hasattr(report.sector, 'value') else report.sector
+        data["sector"] = _get_sector_enum(report.sector)
     return data
 
 
 def _deserialize_report(db_report: models.AnalyticReport) -> AnalyticReport:
     """Convert database model to Pydantic model."""
+    sector_val = None
+    if db_report.sector:
+        sector_val = db_report.sector.value if hasattr(db_report.sector, 'value') else str(db_report.sector)
     return AnalyticReport(
         id=db_report.id,
         title=db_report.title,
-        sector=db_report.sector,
+        sector=sector_val,
         country=db_report.country,
         content=db_report.content,
         created_at=db_report.created_at

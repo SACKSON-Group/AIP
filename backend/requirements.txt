@@ -1,10 +1,46 @@
-# requirements.txt
+# requirements.txt - AFCARE Platform Dependencies
+
+# Web Framework
 fastapi==0.104.1
-uvicorn==0.24.0
+uvicorn[standard]==0.24.0
+starlette==0.27.0
+
+# Database
 sqlalchemy==2.0.23
 psycopg2-binary==2.9.9
+alembic==1.13.1  # Database migrations
+
+# Data Validation
 pydantic==2.5.2
-python-dotenv==1.0.0  # For loading env vars like DB URL
+pydantic-settings==2.1.0
+email-validator==2.1.0
+
+# Authentication & Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.1.2
+
+# AWS S3
+boto3==1.34.14
+botocore==1.34.14
+
+# Environment
+python-dotenv==1.0.0
+
+# HTTP Client (for external integrations)
+httpx==0.26.0
+aiohttp==3.9.1
+
+# Async Support
+asyncio==3.4.3
+
+# Testing
 pytest>=7.0.0
 pytest-asyncio>=0.21.0
-httpx>=0.24.0
+pytest-cov>=4.0.0
+
+# Logging
+python-json-logger==2.0.7
+
+# Form Data (for OAuth2)
+python-multipart==0.0.6

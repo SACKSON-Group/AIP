@@ -83,7 +83,7 @@ def sample_user_data():
     """Sample user data for testing."""
     return {
         "username": "testuser",
-        "password": "securepassword123",
+        "password": "SecurePass123",  # Must have uppercase, lowercase, digit
         "role": "investor"
     }
 

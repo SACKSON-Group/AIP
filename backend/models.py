@@ -159,3 +159,147 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     role = Column(String)
+
+
+# SIRA Platform Models (Shipping Intelligence & Risk Analytics)
+class AlertSeverity(PyEnum):
+    CRITICAL = "Critical"
+    HIGH = "High"
+    MEDIUM = "Medium"
+    LOW = "Low"
+
+
+class AlertStatus(PyEnum):
+    OPEN = "open"
+    ACKNOWLEDGED = "acknowledged"
+    ASSIGNED = "assigned"
+    CLOSED = "closed"
+
+
+class CaseStatus(PyEnum):
+    OPEN = "open"
+    IN_PROGRESS = "in_progress"
+    RESOLVED = "resolved"
+    CLOSED = "closed"
+
+
+class EvidenceType(PyEnum):
+    IOT = "IoT"
+    PHOTO = "photo"
+    VIDEO = "video"
+    DOCUMENT = "document"
+    SENSOR_DATA = "sensor_data"
+    GPS_LOG = "gps_log"
+
+
+class VerificationStatus(PyEnum):
+    PENDING = "pending"
+    VERIFIED = "verified"
+    REJECTED = "rejected"
+
+
+class ShipmentEventType(PyEnum):
+    PLANNED = "planned"
+    ACTUAL = "actual"
+
+
+class Movement(Base):
+    """Shipping movement tracking for SIRA platform."""
+    __tablename__ = "movements"
+
+    id = Column(Integer, primary_key=True, index=True)
+    cargo = Column(String, nullable=False)
+    route = Column(String, nullable=False)
+    assets = Column(String)
+    stakeholders = Column(String)
+    laycan_start = Column(DateTime)
+    laycan_end = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.datetime.now)
+    updated_at = Column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now)
+
+    shipment_events = relationship("ShipmentEvent", back_populates="movement", cascade="all, delete-orphan")
+    alerts = relationship("Alert", back_populates="movement")
+
+
+class ShipmentEvent(Base):
+    """Events in the unified timeline for shipment tracking."""
+    __tablename__ = "shipment_events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    movement_id = Column(Integer, ForeignKey("movements.id", ondelete="CASCADE"), nullable=False)
+    timestamp = Column(DateTime, default=datetime.datetime.now)
+    location = Column(String)
+    actor = Column(String)
+    evidence_ref = Column(String)
+    event_type = Column(SQLEnum(ShipmentEventType), default=ShipmentEventType.ACTUAL)
+
+    movement = relationship("Movement", back_populates="shipment_events")
+
+
+class Case(Base):
+    """Incident case file for security incidents."""
+    __tablename__ = "cases"
+
+    id = Column(Integer, primary_key=True, index=True)
+    overview = Column(String)
+    timeline = Column(String)
+    actions = Column(String)
+    evidence_refs = Column(String)
+    costs = Column(Float, default=0.0)
+    parties = Column(String)
+    audit_log = Column(String)
+    status = Column(SQLEnum(CaseStatus), default=CaseStatus.OPEN)
+    closure_code = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.now)
+    updated_at = Column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now)
+
+    alerts = relationship("Alert", back_populates="case")
+    evidence_items = relationship("Evidence", back_populates="case", cascade="all, delete-orphan")
+
+
+class Alert(Base):
+    """Security alerts for SIRA platform."""
+    __tablename__ = "alerts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    severity = Column(SQLEnum(AlertSeverity), nullable=False)
+    confidence = Column(Float)
+    sla_timer = Column(Integer)
+    domain = Column(String)
+    site_zone = Column(String)
+    movement_id = Column(Integer, ForeignKey("movements.id", ondelete="SET NULL"), nullable=True)
+    status = Column(SQLEnum(AlertStatus), default=AlertStatus.OPEN)
+    case_id = Column(Integer, ForeignKey("cases.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.now)
+    updated_at = Column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now)
+
+    movement = relationship("Movement", back_populates="alerts")
+    case = relationship("Case", back_populates="alerts")
+
+
+class Playbook(Base):
+    """Incident response playbooks."""
+    __tablename__ = "playbooks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    incident_type = Column(String, nullable=False)
+    domain = Column(String)
+    steps = Column(String)
+    created_at = Column(DateTime, default=datetime.datetime.now)
+    updated_at = Column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now)
+
+
+class Evidence(Base):
+    """Evidence storage with integrity verification."""
+    __tablename__ = "evidence"
+
+    id = Column(Integer, primary_key=True, index=True)
+    case_id = Column(Integer, ForeignKey("cases.id", ondelete="CASCADE"), nullable=False)
+    evidence_type = Column(SQLEnum(EvidenceType), nullable=False)
+    file_ref = Column(String, nullable=False)
+    metadata_json = Column(String)
+    verification_status = Column(SQLEnum(VerificationStatus), default=VerificationStatus.PENDING)
+    file_hash = Column(String)
+    created_at = Column(DateTime, default=datetime.datetime.now)
+
+    case = relationship("Case", back_populates="evidence_items")

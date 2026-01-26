@@ -93,3 +93,133 @@ def created_investor(client, sample_investor_data):
     """Create and return an investor."""
     response = client.post("/investors/", json=sample_investor_data)
     return response.json()
+
+
+# SIRA Platform test fixtures
+
+@pytest.fixture
+def sample_movement_data():
+    """Sample movement data for testing."""
+    return {
+        "cargo": "Crude Oil - 50,000 barrels",
+        "route": "Lagos Port to Rotterdam",
+        "assets": "Tanker MV Ocean Star",
+        "stakeholders": "Shell Nigeria, EP Trading",
+        "laycan_start": "2026-02-01T00:00:00",
+        "laycan_end": "2026-02-05T00:00:00"
+    }
+
+
+@pytest.fixture
+def sample_alert_data():
+    """Sample alert data for testing."""
+    return {
+        "severity": "High",
+        "confidence": 0.85,
+        "sla_timer": 60,
+        "domain": "Maritime Security",
+        "site_zone": "Gulf of Guinea"
+    }
+
+
+@pytest.fixture
+def sample_case_data():
+    """Sample case data for testing."""
+    return {
+        "overview": "Suspected piracy attempt near Port Harcourt",
+        "timeline": '{"events": []}',
+        "actions": '{"actions": []}',
+        "costs": 0.0,
+        "parties": "Local authorities, Navy patrol"
+    }
+
+
+@pytest.fixture
+def sample_playbook_data():
+    """Sample playbook data for testing."""
+    return {
+        "incident_type": "Piracy Attempt",
+        "domain": "Maritime Security",
+        "steps": '[{"step": 1, "action": "Alert nearby vessels"}, {"step": 2, "action": "Contact navy"}]'
+    }
+
+
+@pytest.fixture
+def sample_evidence_data():
+    """Sample evidence data for testing (requires case_id)."""
+    return {
+        "evidence_type": "photo",
+        "file_ref": "/uploads/evidence/incident_photo_001.jpg",
+        "metadata_json": '{"uploader": "field_agent", "timestamp": "2026-01-26T10:30:00"}'
+    }
+
+
+@pytest.fixture
+def auth_headers(client, db_session):
+    """Create an authenticated user and return auth headers."""
+    from backend.models import User
+    from backend.auth import get_password_hash, create_access_token
+    from datetime import timedelta
+
+    # Create a test user directly in the database
+    test_user = User(
+        username="testoperator",
+        hashed_password=get_password_hash("testpass123"),
+        role="operator"
+    )
+    db_session.add(test_user)
+    db_session.commit()
+
+    # Create access token
+    token = create_access_token(
+        data={"sub": test_user.username},
+        expires_delta=timedelta(minutes=30)
+    )
+
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def admin_auth_headers(client, db_session):
+    """Create an admin user and return auth headers."""
+    from backend.models import User
+    from backend.auth import get_password_hash, create_access_token
+    from datetime import timedelta
+
+    test_user = User(
+        username="testadmin",
+        hashed_password=get_password_hash("adminpass123"),
+        role="admin"
+    )
+    db_session.add(test_user)
+    db_session.commit()
+
+    token = create_access_token(
+        data={"sub": test_user.username},
+        expires_delta=timedelta(minutes=30)
+    )
+
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def security_lead_auth_headers(client, db_session):
+    """Create a security lead user and return auth headers."""
+    from backend.models import User
+    from backend.auth import get_password_hash, create_access_token
+    from datetime import timedelta
+
+    test_user = User(
+        username="testsecuritylead",
+        hashed_password=get_password_hash("secpass123"),
+        role="security_lead"
+    )
+    db_session.add(test_user)
+    db_session.commit()
+
+    token = create_access_token(
+        data={"sub": test_user.username},
+        expires_delta=timedelta(minutes=30)
+    )
+
+    return {"Authorization": f"Bearer {token}"}

@@ -1,26 +1,24 @@
 """Authentication and security utilities."""
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
-from jose import JWTError, jwt
-from passlib.context import CryptContext
+import jwt  # PyJWT
+import bcrypt
 from .config import settings
-
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash."""
     # Handle bcrypt 72-byte limit
-    truncated = plain_password[:72] if plain_password else ""
-    return pwd_context.verify(truncated, hashed_password)
+    truncated = (plain_password[:72] if plain_password else "").encode('utf-8')
+    return bcrypt.checkpw(truncated, hashed_password.encode('utf-8'))
 
 
 def get_password_hash(password: str) -> str:
     """Hash a password for storage."""
     # Handle bcrypt 72-byte limit
-    truncated = password[:72] if password else ""
-    return pwd_context.hash(truncated)
+    truncated = (password[:72] if password else "").encode('utf-8')
+    hashed = bcrypt.hashpw(truncated, bcrypt.gensalt())
+    return hashed.decode('utf-8')
 
 
 def create_access_token(
@@ -77,5 +75,5 @@ def decode_access_token(token: str) -> Optional[Dict[str, Any]]:
             algorithms=[settings.JWT_ALGORITHM]
         )
         return payload
-    except JWTError:
+    except jwt.PyJWTError:
         return None

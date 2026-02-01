@@ -71,3 +71,9 @@ frontend/out/
 .env
 .env.*
 !.env.example
+
+# IDE
+.idea/
+
+# SQLite database
+*.db

@@ -5,7 +5,11 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 load_dotenv()
-SQLALCHEMY_DATABASE_URL = os.getenv("SQLALCHEMY_DATABASE_URL", "sqlite:///./test.db")
+
+# Use aip_platform.db as the default database
+db_path = os.path.join(os.path.dirname(__file__), 'aip_platform.db')
+default_db_url = f"sqlite:///{db_path}"
+SQLALCHEMY_DATABASE_URL = os.getenv("SQLALCHEMY_DATABASE_URL", default_db_url)
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,

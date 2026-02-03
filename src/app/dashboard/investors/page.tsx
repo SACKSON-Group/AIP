@@ -1,0 +1,402 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { investorsApi, Investor, InvestorCreate, Project, projectsApi } from '../../../lib/api';
+
+const SECTORS = ['Energy', 'Mining', 'Water', 'Transport', 'Ports', 'Rail', 'Roads', 'Agriculture', 'Health'];
+const INSTRUMENTS = ['Equity', 'Debt', 'Mezzanine'];
+
+export default function InvestorsPage() {
+  const [investors, setInvestors] = useState<Investor[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedInvestor, setSelectedInvestor] = useState<Investor | null>(null);
+  const [matchedProjects, setMatchedProjects] = useState<Project[]>([]);
+  const [showMatchModal, setShowMatchModal] = useState(false);
+
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<InvestorCreate>();
+
+  const fetchInvestors = async () => {
+    try {
+      const data = await investorsApi.list();
+      setInvestors(data);
+    } catch (error) {
+      console.error('Failed to fetch investors:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchInvestors();
+  }, []);
+
+  const onSubmit = async (data: InvestorCreate) => {
+    try {
+      const formattedData = {
+        ...data,
+        instruments: Array.isArray(data.instruments) ? data.instruments : [data.instruments],
+        country_focus: typeof data.country_focus === 'string'
+          ? (data.country_focus as string).split(',').map((c: string) => c.trim())
+          : data.country_focus,
+        sector_focus: Array.isArray(data.sector_focus) ? data.sector_focus : [data.sector_focus],
+      };
+      await investorsApi.create(formattedData);
+      setShowModal(false);
+      reset();
+      fetchInvestors();
+    } catch (error) {
+      console.error('Failed to create investor:', error);
+    }
+  };
+
+  const findMatches = async (investor: Investor) => {
+    try {
+      const projects = await projectsApi.list();
+      const matched = projects.filter((p: Project) =>
+        investor.sector_focus.includes(p.sector) &&
+        investor.country_focus.some((c: string) => c.toLowerCase() === p.country.toLowerCase() || c === 'Global')
+      );
+      setMatchedProjects(matched);
+      setSelectedInvestor(investor);
+      setShowMatchModal(true);
+    } catch (error) {
+      console.error('Failed to find matches:', error);
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Investors</h1>
+        <button
+          onClick={() => setShowModal(true)}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+        >
+          <PlusIcon className="w-5 h-5" />
+          New Investor
+        </button>
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {investors.length > 0 ? (
+            investors.map((investor) => (
+              <div key={investor.id} className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{investor.fund_name}</h3>
+
+                {investor.aum && (
+                  <p className="text-sm text-gray-500 mb-3">
+                    AUM: ${formatNumber(investor.aum)}
+                  </p>
+                )}
+
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase mb-1">Ticket Size</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      ${formatNumber(investor.ticket_size_min)} - ${formatNumber(investor.ticket_size_max)}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase mb-1">Instruments</p>
+                    <div className="flex flex-wrap gap-1">
+                      {investor.instruments.map((inst) => (
+                        <span key={inst} className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
+                          {inst}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase mb-1">Sector Focus</p>
+                    <div className="flex flex-wrap gap-1">
+                      {investor.sector_focus.slice(0, 3).map((sector) => (
+                        <span key={sector} className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">
+                          {sector}
+                        </span>
+                      ))}
+                      {investor.sector_focus.length > 3 && (
+                        <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">
+                          +{investor.sector_focus.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase mb-1">Country Focus</p>
+                    <p className="text-sm text-gray-700">{investor.country_focus.join(', ')}</p>
+                  </div>
+
+                  {investor.target_irr && (
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase mb-1">Target IRR</p>
+                      <p className="text-sm font-medium text-gray-900">{investor.target_irr}%</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-4 pt-4 border-t border-gray-100 flex gap-2">
+                  <button
+                    onClick={() => setSelectedInvestor(investor)}
+                    className="flex-1 px-3 py-2 text-sm text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition"
+                  >
+                    View Details
+                  </button>
+                  <button
+                    onClick={() => findMatches(investor)}
+                    className="flex-1 px-3 py-2 text-sm text-white bg-green-600 rounded-lg hover:bg-green-700 transition"
+                  >
+                    Find Matches
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="col-span-full text-center py-12 bg-white rounded-xl shadow-sm">
+              <p className="text-gray-500">No investors found. Add your first investor to get started.</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Create Investor Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900">Add New Investor</h2>
+                <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">
+                  <XIcon className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+            <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Fund Name *</label>
+                  <input
+                    {...register('fund_name', { required: 'Fund name is required' })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                  {errors.fund_name && <p className="text-red-500 text-sm mt-1">{errors.fund_name.message}</p>}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">AUM ($)</label>
+                  <input
+                    {...register('aum', { valueAsNumber: true })}
+                    type="number"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Target IRR (%)</label>
+                  <input
+                    {...register('target_irr', { valueAsNumber: true })}
+                    type="number"
+                    step="0.1"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Min Ticket Size ($) *</label>
+                  <input
+                    {...register('ticket_size_min', { required: 'Required', valueAsNumber: true })}
+                    type="number"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                  {errors.ticket_size_min && <p className="text-red-500 text-sm mt-1">{errors.ticket_size_min.message}</p>}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Max Ticket Size ($) *</label>
+                  <input
+                    {...register('ticket_size_max', { required: 'Required', valueAsNumber: true })}
+                    type="number"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                  {errors.ticket_size_max && <p className="text-red-500 text-sm mt-1">{errors.ticket_size_max.message}</p>}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Instruments *</label>
+                  <select
+                    {...register('instruments', { required: 'Required' })}
+                    multiple
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 h-24"
+                  >
+                    {INSTRUMENTS.map(i => <option key={i} value={i}>{i}</option>)}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Sector Focus *</label>
+                  <select
+                    {...register('sector_focus', { required: 'Required' })}
+                    multiple
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 h-24"
+                  >
+                    {SECTORS.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Country Focus *</label>
+                  <input
+                    {...register('country_focus', { required: 'Required' })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., Kenya, Nigeria, South Africa (comma-separated)"
+                  />
+                  {errors.country_focus && <p className="text-red-500 text-sm mt-1">{errors.country_focus.message}</p>}
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">ESG Constraints</label>
+                  <textarea
+                    {...register('esg_constraints')}
+                    rows={3}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    placeholder="Describe any ESG requirements..."
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-4 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                >
+                  Add Investor
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* View Investor Details Modal */}
+      {selectedInvestor && !showMatchModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900">{selectedInvestor.fund_name}</h2>
+                <button onClick={() => setSelectedInvestor(null)} className="text-gray-400 hover:text-gray-600">
+                  <XIcon className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+            <div className="p-6 space-y-4">
+              <DetailItem label="AUM" value={selectedInvestor.aum ? `$${formatNumber(selectedInvestor.aum)}` : '-'} />
+              <DetailItem label="Ticket Size" value={`$${formatNumber(selectedInvestor.ticket_size_min)} - $${formatNumber(selectedInvestor.ticket_size_max)}`} />
+              <DetailItem label="Target IRR" value={selectedInvestor.target_irr ? `${selectedInvestor.target_irr}%` : '-'} />
+              <DetailItem label="Instruments" value={selectedInvestor.instruments.join(', ')} />
+              <DetailItem label="Sector Focus" value={selectedInvestor.sector_focus.join(', ')} />
+              <DetailItem label="Country Focus" value={selectedInvestor.country_focus.join(', ')} />
+              <DetailItem label="ESG Constraints" value={selectedInvestor.esg_constraints || '-'} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Match Results Modal */}
+      {showMatchModal && selectedInvestor && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900">
+                  Matching Projects for {selectedInvestor.fund_name}
+                </h2>
+                <button onClick={() => { setShowMatchModal(false); setSelectedInvestor(null); }} className="text-gray-400 hover:text-gray-600">
+                  <XIcon className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              {matchedProjects.length > 0 ? (
+                <div className="space-y-4">
+                  {matchedProjects.map((project) => (
+                    <div key={project.id} className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-semibold text-gray-900">{project.name}</h3>
+                          <p className="text-sm text-gray-500">{project.sector} - {project.country}</p>
+                        </div>
+                        <span className={`px-2 py-1 text-xs rounded-full ${getStageColor(project.stage)}`}>
+                          {project.stage}
+                        </span>
+                      </div>
+                      <div className="mt-2 flex gap-4 text-sm">
+                        <span className="text-gray-600">CAPEX: ${formatNumber(project.estimated_capex)}</span>
+                        {project.funding_gap && (
+                          <span className="text-green-600">Gap: ${formatNumber(project.funding_gap)}</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-gray-500 py-8">No matching projects found for this investor&apos;s criteria.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DetailItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-sm text-gray-500">{label}</p>
+      <p className="font-medium text-gray-900">{value}</p>
+    </div>
+  );
+}
+
+function getStageColor(stage: string) {
+  const colors: Record<string, string> = {
+    Concept: 'bg-gray-100 text-gray-800',
+    Feasibility: 'bg-blue-100 text-blue-800',
+    Procurement: 'bg-yellow-100 text-yellow-800',
+    Construction: 'bg-orange-100 text-orange-800',
+    Operation: 'bg-green-100 text-green-800',
+  };
+  return colors[stage] || 'bg-gray-100 text-gray-800';
+}
+
+function formatNumber(num: number) {
+  if (num >= 1000000000) return `${(num / 1000000000).toFixed(1)}B`;
+  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+  if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+  return num.toString();
+}
+
+function PlusIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+    </svg>
+  );
+}
+
+function XIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+    </svg>
+  );
+}

@@ -8,7 +8,7 @@ import { authApi } from '../../lib/api';
 import Link from 'next/link';
 
 interface LoginForm {
-  username: string;
+  email: string;
   password: string;
 }
 
@@ -23,7 +23,7 @@ export default function Login() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await authApi.login(data.username, data.password);
+      const response = await authApi.login(data.email, data.password);
       login(response.access_token);
       router.push('/dashboard');
     } catch (err: unknown) {
@@ -51,18 +51,18 @@ export default function Login() {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-                Username
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                Email
               </label>
               <input
-                {...register('username', { required: 'Username is required' })}
-                type="text"
-                id="username"
+                {...register('email', { required: 'Email is required' })}
+                type="email"
+                id="email"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                placeholder="Enter your username"
+                placeholder="Enter your email"
               />
-              {errors.username && (
-                <p className="mt-1 text-sm text-red-600">{errors.username.message}</p>
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
               )}
             </div>
 

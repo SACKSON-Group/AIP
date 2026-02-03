@@ -36,17 +36,17 @@ api.interceptors.response.use(
 
 // Auth API
 export const authApi = {
-  login: async (username: string, password: string) => {
+  login: async (email: string, password: string) => {
     const formData = new URLSearchParams();
-    formData.append('username', username);
+    formData.append('username', email); // Backend expects email in username field
     formData.append('password', password);
     const response = await api.post('/auth/token', formData, {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
     return response.data;
   },
-  register: async (username: string, password: string, role: string = 'user') => {
-    const response = await api.post('/auth/users/', { username, password, role });
+  register: async (email: string, password: string, full_name: string, phone?: string) => {
+    const response = await api.post('/auth/register', { email, password, full_name, phone });
     return response.data;
   },
 };

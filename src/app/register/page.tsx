@@ -7,10 +7,11 @@ import { authApi } from '../../lib/api';
 import Link from 'next/link';
 
 interface RegisterForm {
-  username: string;
+  email: string;
+  full_name: string;
+  phone?: string;
   password: string;
   confirmPassword: string;
-  role: string;
 }
 
 export default function Register() {
@@ -25,7 +26,7 @@ export default function Register() {
     setIsLoading(true);
     setError(null);
     try {
-      await authApi.register(data.username, data.password, data.role);
+      await authApi.register(data.email, data.password, data.full_name, data.phone);
       router.push('/login?registered=true');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Registration failed. Please try again.';
@@ -52,40 +53,57 @@ export default function Register() {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-                Username
+              <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 mb-1">
+                Full Name
               </label>
               <input
-                {...register('username', {
-                  required: 'Username is required',
-                  minLength: { value: 3, message: 'Username must be at least 3 characters' }
+                {...register('full_name', {
+                  required: 'Full name is required',
+                  minLength: { value: 2, message: 'Name must be at least 2 characters' }
                 })}
                 type="text"
-                id="username"
+                id="full_name"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                placeholder="Choose a username"
+                placeholder="Enter your full name"
               />
-              {errors.username && (
-                <p className="mt-1 text-sm text-red-600">{errors.username.message}</p>
+              {errors.full_name && (
+                <p className="mt-1 text-sm text-red-600">{errors.full_name.message}</p>
               )}
             </div>
 
             <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
-                Role
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                Email
               </label>
-              <select
-                {...register('role', { required: 'Role is required' })}
-                id="role"
+              <input
+                {...register('email', {
+                  required: 'Email is required',
+                  pattern: {
+                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                    message: 'Invalid email address'
+                  }
+                })}
+                type="email"
+                id="email"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-              >
-                <option value="sponsor">Project Sponsor</option>
-                <option value="investor">Investor</option>
-                <option value="admin">Admin</option>
-              </select>
-              {errors.role && (
-                <p className="mt-1 text-sm text-red-600">{errors.role.message}</p>
+                placeholder="Enter your email"
+              />
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
               )}
+            </div>
+
+            <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                Phone (optional)
+              </label>
+              <input
+                {...register('phone')}
+                type="tel"
+                id="phone"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                placeholder="Enter your phone number"
+              />
             </div>
 
             <div>

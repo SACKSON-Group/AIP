@@ -4,10 +4,8 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { jwtDecode } from 'jwt-decode';
 
 interface User {
-  id: string;
-  email: string;
-  full_name: string;
-  role: string;
+  sub: string;
+  exp: number;
 }
 
 interface AuthContextType {
@@ -30,15 +28,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const storedToken = localStorage.getItem('token');
     if (storedToken) {
       try {
-        const decoded = jwtDecode<User & { exp: number }>(storedToken);
+        const decoded = jwtDecode<User>(storedToken);
         if (decoded.exp * 1000 > Date.now()) {
           setToken(storedToken);
-          setUser({
-            id: decoded.id,
-            email: decoded.email,
-            full_name: decoded.full_name,
-            role: decoded.role,
-          });
+          setUser(decoded);
         } else {
           localStorage.removeItem('token');
         }
@@ -54,12 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(newToken);
     try {
       const decoded = jwtDecode<User>(newToken);
-      setUser({
-        id: decoded.id,
-        email: decoded.email,
-        full_name: decoded.full_name,
-        role: decoded.role,
-      });
+      setUser(decoded);
     } catch {
       console.error('Failed to decode token');
     }
@@ -69,6 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('token');
     setToken(null);
     setUser(null);
+    window.location.href = '/login';
   };
 
   return (

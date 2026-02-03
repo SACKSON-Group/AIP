@@ -163,13 +163,17 @@ def authenticate_user(db: Session, username: str, password: str):
     # Get the password hash - database may use 'password_hash' or 'hashed_password'
     stored_hash = getattr(user, 'password_hash', None) or getattr(user, 'hashed_password', '')
 
-    # Prefer Passlib hash verification if available
+    # Use bcrypt directly to avoid passlib compatibility issues
     try:
-        from passlib.context import CryptContext
-        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-        ok = pwd_context.verify(truncated_password, stored_hash)
+        import bcrypt
+        ok = bcrypt.checkpw(truncated_password.encode('utf-8'), stored_hash.encode('utf-8'))
     except Exception:
-        # Fallback for early dev (NOT for production)
-        ok = truncated_password == stored_hash
+        # Fallback to passlib
+        try:
+            from passlib.context import CryptContext
+            pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+            ok = pwd_context.verify(truncated_password, stored_hash)
+        except Exception:
+            ok = False
 
     return user if ok else None

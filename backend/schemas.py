@@ -187,6 +187,23 @@ class User(UserBase):
         from_attributes = True
 
 
+# Email-based user schemas
+class UserRegister(BaseModel):
+    email: str
+    password: str
+    full_name: str
+    phone: Optional[str] = None
+
+
+class UserResponse(BaseModel):
+    id: int
+    email: str
+    full_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str

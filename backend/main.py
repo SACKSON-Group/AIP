@@ -29,6 +29,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+def root():
+    return {"status": "AIP API is running", "docs": "/docs"}
+
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}

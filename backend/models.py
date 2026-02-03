@@ -156,6 +156,14 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True)
-    username = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
-    role = Column(String)
+    uuid = Column(String(36), nullable=False)
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    full_name = Column(String(255), nullable=True)
+    phone = Column(String(50), nullable=True)
+    is_email_verified = Column(Boolean, default=False, nullable=False)
+    is_phone_verified = Column(Boolean, default=False, nullable=False)
+    status = Column(String(50), default='active', nullable=False)
+    last_login_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.now, nullable=False)
+    updated_at = Column(DateTime, default=datetime.datetime.now, nullable=False)

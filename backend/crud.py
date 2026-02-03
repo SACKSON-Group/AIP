@@ -144,7 +144,11 @@ def get_analytic_report(db: Session, report_id: int):
 
 # -------- Auth helpers --------
 def get_user_by_username(db: Session, username: str):
+    """Get user by email (username field contains email)."""
     user_model = _get_model("User")
+    # Database uses 'email' column, not 'username'
+    if hasattr(user_model, 'email'):
+        return db.query(user_model).filter(user_model.email == username).first()
     return db.query(user_model).filter(user_model.username == username).first()
 
 
@@ -156,13 +160,20 @@ def authenticate_user(db: Session, username: str, password: str):
     # Truncate password to 72 bytes for bcrypt limit
     truncated_password = password[:72] if password else ""
 
-    # Prefer Passlib hash verification if available
+    # Get the password hash - database may use 'password_hash' or 'hashed_password'
+    stored_hash = getattr(user, 'password_hash', None) or getattr(user, 'hashed_password', '')
+
+    # Use bcrypt directly to avoid passlib compatibility issues
     try:
-        from passlib.context import CryptContext
-        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-        ok = pwd_context.verify(truncated_password, user.hashed_password)
+        import bcrypt
+        ok = bcrypt.checkpw(truncated_password.encode('utf-8'), stored_hash.encode('utf-8'))
     except Exception:
-        # Fallback for early dev (NOT for production)
-        ok = truncated_password == getattr(user, "hashed_password", "")
+        # Fallback to passlib
+        try:
+            from passlib.context import CryptContext
+            pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+            ok = pwd_context.verify(truncated_password, stored_hash)
+        except Exception:
+            ok = False
 
     return user if ok else None

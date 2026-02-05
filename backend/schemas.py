@@ -207,3 +207,158 @@ class UserResponse(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+
+# ============================================================================
+# DEAL ROOM SCHEMAS
+# ============================================================================
+
+class DealRoomBase(BaseModel):
+    project_id: int
+    name: str
+    description: Optional[str] = None
+    deal_value: Optional[float] = None
+    deal_currency: str = "USD"
+    target_close_date: Optional[date] = None
+    is_video_enabled: bool = True
+    is_chat_enabled: bool = True
+    require_nda: bool = True
+
+
+class DealRoomCreate(DealRoomBase):
+    pass
+
+
+class DealRoomUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[str] = None
+    deal_value: Optional[float] = None
+    target_close_date: Optional[date] = None
+    is_video_enabled: Optional[bool] = None
+    is_chat_enabled: Optional[bool] = None
+    require_nda: Optional[bool] = None
+
+
+class DealRoomResponse(DealRoomBase):
+    id: int
+    status: str
+    created_by_id: int
+    created_at: datetime
+    updated_at: datetime
+    closed_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class DealRoomMemberCreate(BaseModel):
+    email: str
+    role: str = "member"
+
+
+class DealRoomMemberResponse(BaseModel):
+    id: int
+    deal_room_id: int
+    user_id: int
+    role: str
+    invitation_status: str
+    can_upload: bool
+    can_delete: bool
+    can_invite: bool
+    nda_signed: bool
+    nda_signed_at: Optional[datetime] = None
+    joined_at: datetime
+    user_email: Optional[str] = None
+    user_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class DealRoomDocumentCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+    document_type: str = "other"
+    file_name: str
+    file_url: str
+    file_size: Optional[int] = None
+    mime_type: Optional[str] = None
+    requires_signature: bool = False
+
+
+class DealRoomDocumentResponse(BaseModel):
+    id: int
+    deal_room_id: int
+    title: str
+    description: Optional[str] = None
+    document_type: str
+    file_name: str
+    file_url: str
+    file_size: Optional[int] = None
+    mime_type: Optional[str] = None
+    version: int
+    requires_signature: bool
+    signature_status: str
+    uploaded_by_id: int
+    uploaded_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class DealRoomMeetingCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+    agenda: Optional[str] = None
+    scheduled_at: datetime
+    duration_minutes: int = 60
+    timezone: str = "UTC"
+
+
+class DealRoomMeetingResponse(BaseModel):
+    id: int
+    deal_room_id: int
+    title: str
+    description: Optional[str] = None
+    agenda: Optional[str] = None
+    scheduled_at: datetime
+    duration_minutes: int
+    timezone: str
+    meeting_url: Optional[str] = None
+    meeting_id: Optional[str] = None
+    status: str
+    is_recorded: bool
+    recording_url: Optional[str] = None
+    created_by_id: int
+    created_at: datetime
+    started_at: Optional[datetime] = None
+    ended_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class DealRoomMessageCreate(BaseModel):
+    message: str
+    message_type: str = "text"
+    parent_id: Optional[int] = None
+    attachments: Optional[List[str]] = None
+
+
+class DealRoomMessageResponse(BaseModel):
+    id: int
+    deal_room_id: int
+    user_id: int
+    message: str
+    message_type: str
+    parent_id: Optional[int] = None
+    attachments: Optional[str] = None
+    is_edited: bool
+    is_deleted: bool
+    created_at: datetime
+    updated_at: datetime
+    user_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True

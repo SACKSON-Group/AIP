@@ -24,3 +24,6 @@ python-dotenv>=1.0.0
 
 # For PythonAnywhere WSGI compatibility
 a2wsgi>=1.7.0
+
+# PostgreSQL support
+psycopg2-binary>=2.9.0

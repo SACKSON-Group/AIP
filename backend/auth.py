@@ -6,9 +6,9 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
-from backend.models import User
+from backend.models import User as UserModel
 from backend.database import get_db
-from backend.schemas import Token, User
+from backend.schemas import Token, User as UserSchema
 
 SECRET_KEY = "your-secret-key"  # Change to env var in production
 ALGORITHM = "HS256"
@@ -50,12 +50,12 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-    user = db.query(User).filter(User.username == username).first()
+    user = db.query(UserModel).filter(UserModel.email == username).first()
     if user is None:
         raise credentials_exception
     return user
 
-async def get_current_admin(current_user: User = Depends(get_current_user)):
+async def get_current_admin(current_user: UserModel = Depends(get_current_user)):
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
     return current_user

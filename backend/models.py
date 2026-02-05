@@ -527,7 +527,7 @@ class VerificationHistory(Base):
     previous_status = Column(String(50), nullable=True)
     new_status = Column(String(50), nullable=True)
     notes = Column(String, nullable=True)
-    metadata = Column(String, nullable=True)  # JSON for additional data
+    extra_data = Column(String, nullable=True)  # JSON for additional data
 
     # Timestamp
     created_at = Column(DateTime, default=datetime.datetime.now)
@@ -775,7 +775,7 @@ class BlockchainCertificate(Base):
     verification_url = Column(String(500), nullable=True)
 
     # Certificate metadata
-    metadata = Column(String, nullable=True)  # JSON
+    cert_metadata = Column(String, nullable=True)  # JSON
 
     # Status
     status = Column(String(50), default="active")  # active, revoked, expired

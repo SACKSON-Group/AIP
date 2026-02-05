@@ -14,7 +14,7 @@ from backend.models import (
     VerificationLevel, VerificationStatus, VerifierType, User, Project,
     BlockchainCertificate
 )
-from backend.routers.auth import get_current_user
+from backend.auth import get_current_user
 from backend.services.blockchain import blockchain_service
 from backend.services.ai_service import ai_service, DocumentAnalysisType
 from pydantic import BaseModel
@@ -506,7 +506,7 @@ async def submit_lp_review(
                     transaction_hash=certificate.transaction_hash,
                     block_number=certificate.block_number,
                     explorer_url=certificate.verification_url,
-                    metadata=json.dumps(metadata),
+                    cert_metadata=json.dumps(metadata),
                     issued_to_id=verification.requested_by_id,
                     issued_by_id=current_user.id
                 )

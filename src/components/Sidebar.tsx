@@ -10,6 +10,7 @@ const navigation = [
   { name: 'Investors', href: '/dashboard/investors', icon: UsersIcon },
   { name: 'Verifications', href: '/dashboard/verifications', icon: ShieldIcon },
   { name: 'Data Rooms', href: '/dashboard/data-rooms', icon: DatabaseIcon },
+  { name: 'Deal Rooms', href: '/dashboard/deal-rooms', icon: DealRoomIcon },
   { name: 'Analytics', href: '/dashboard/analytics', icon: ChartIcon },
   { name: 'Events', href: '/dashboard/events', icon: CalendarIcon },
 ];
@@ -66,6 +67,14 @@ function CalendarIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+    </svg>
+  );
+}
+
+function DealRoomIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
     </svg>
   );
 }

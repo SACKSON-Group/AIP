@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { verificationsApi, projectsApi, Verification, Project } from '../../../lib/api';
+import { verificationsApi, projectsApi, Verification, Project, VerificationCreate } from '../../../lib/api';
 
 const VERIFICATION_LEVELS = [
   { value: 'V0: Submitted', label: 'V0: Submitted', color: 'bg-gray-100 text-gray-800' },
@@ -50,7 +50,7 @@ export default function VerificationsPage() {
 
   const onSubmit = async (data: VerificationFormData) => {
     try {
-      const formattedData: Record<string, unknown> = {
+      const formattedData: VerificationCreate = {
         project_id: Number(data.project_id),
         level: data.level,
       };

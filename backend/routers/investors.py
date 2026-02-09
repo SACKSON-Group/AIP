@@ -34,6 +34,13 @@ def _deserialize_investor(db_inv: models.Investor) -> Investor:
     )
 
 
+@router.get("/", response_model=list[Investor])
+def list_all(db: Session = Depends(get_db)):
+    """Get all investors."""
+    db_investors = db.query(models.Investor).all()
+    return [_deserialize_investor(inv) for inv in db_investors]
+
+
 @router.post("/", response_model=Investor)
 def create(investor: InvestorCreate, db: Session = Depends(get_db)):
     """Create a new investor."""

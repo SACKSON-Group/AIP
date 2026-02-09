@@ -37,6 +37,13 @@ def ping():
     return {"ok": True}
 
 
+@router.get("/", response_model=List[Verification])
+def list_all(db: Session = Depends(get_db)):
+    """Get all verification records."""
+    db_verifications = db.query(models.Verification).all()
+    return [_deserialize_verification(v) for v in db_verifications]
+
+
 @router.post("/", response_model=Verification)
 def create(verification: VerificationCreate, db: Session = Depends(get_db)):
     """Create a new verification record for a project."""

@@ -23,11 +23,11 @@ from fastapi.staticfiles import StaticFiles
 # Create FastAPI app first
 app = FastAPI(title="AIP API", version="1.0")
 
-# Configure CORS
+# Configure CORS - allow all origins for production
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

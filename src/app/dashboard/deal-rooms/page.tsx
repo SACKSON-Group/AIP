@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://aip-llcz.onrender.com';
+
 interface DealRoom {
   id: number;
   project_id: number;
@@ -51,7 +53,7 @@ export default function DealRoomsPage() {
   const fetchDealRooms = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:8000/deal-rooms/', {
+      const response = await fetch(`${API_URL}/deal-rooms/`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.ok) {
@@ -68,7 +70,7 @@ export default function DealRoomsPage() {
   const fetchProjects = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:8000/projects/', {
+      const response = await fetch(`${API_URL}/projects/`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.ok) {
@@ -91,7 +93,7 @@ export default function DealRoomsPage() {
         target_close_date: newDealRoom.target_close_date || null
       };
 
-      const response = await fetch('http://localhost:8000/deal-rooms/', {
+      const response = await fetch(`${API_URL}/deal-rooms/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

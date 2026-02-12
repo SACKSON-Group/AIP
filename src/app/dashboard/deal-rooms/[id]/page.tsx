@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://aip-llcz.onrender.com';
+
 interface DealRoom {
   id: number;
   project_id: number;
@@ -130,7 +132,7 @@ export default function DealRoomDetailPage() {
 
   const fetchDealRoom = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/deal-rooms/${dealRoomId}`, {
+      const response = await fetch(`${API_URL}/deal-rooms/${dealRoomId}`, {
         headers: getAuthHeaders()
       });
       if (response.ok) {
@@ -146,7 +148,7 @@ export default function DealRoomDetailPage() {
 
   const fetchMembers = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/deal-rooms/${dealRoomId}/members`, {
+      const response = await fetch(`${API_URL}/deal-rooms/${dealRoomId}/members`, {
         headers: getAuthHeaders()
       });
       if (response.ok) {
@@ -160,7 +162,7 @@ export default function DealRoomDetailPage() {
 
   const fetchDocuments = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/deal-rooms/${dealRoomId}/documents`, {
+      const response = await fetch(`${API_URL}/deal-rooms/${dealRoomId}/documents`, {
         headers: getAuthHeaders()
       });
       if (response.ok) {
@@ -174,7 +176,7 @@ export default function DealRoomDetailPage() {
 
   const fetchMeetings = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/deal-rooms/${dealRoomId}/meetings`, {
+      const response = await fetch(`${API_URL}/deal-rooms/${dealRoomId}/meetings`, {
         headers: getAuthHeaders()
       });
       if (response.ok) {
@@ -188,7 +190,7 @@ export default function DealRoomDetailPage() {
 
   const fetchMessages = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/deal-rooms/${dealRoomId}/messages`, {
+      const response = await fetch(`${API_URL}/deal-rooms/${dealRoomId}/messages`, {
         headers: getAuthHeaders()
       });
       if (response.ok) {
@@ -203,7 +205,7 @@ export default function DealRoomDetailPage() {
   const handleInviteMember = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch(`http://localhost:8000/deal-rooms/${dealRoomId}/members`, {
+      const response = await fetch(`${API_URL}/deal-rooms/${dealRoomId}/members`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({ email: inviteEmail, role: inviteRole })
@@ -222,7 +224,7 @@ export default function DealRoomDetailPage() {
   const handleUploadDocument = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch(`http://localhost:8000/deal-rooms/${dealRoomId}/documents`, {
+      const response = await fetch(`${API_URL}/deal-rooms/${dealRoomId}/documents`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify(uploadData)
@@ -240,7 +242,7 @@ export default function DealRoomDetailPage() {
   const handleScheduleMeeting = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch(`http://localhost:8000/deal-rooms/${dealRoomId}/meetings`, {
+      const response = await fetch(`${API_URL}/deal-rooms/${dealRoomId}/meetings`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify(meetingData)
@@ -260,7 +262,7 @@ export default function DealRoomDetailPage() {
     if (!newMessage.trim()) return;
 
     try {
-      const response = await fetch(`http://localhost:8000/deal-rooms/${dealRoomId}/messages`, {
+      const response = await fetch(`${API_URL}/deal-rooms/${dealRoomId}/messages`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({ message: newMessage })

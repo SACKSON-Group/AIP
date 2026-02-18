@@ -1,4 +1,5 @@
 # auth.py (new file)
+import os
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from fastapi import Depends, HTTPException, status
@@ -10,7 +11,7 @@ from backend.models import User as UserModel
 from backend.database import get_db
 from backend.schemas import Token, User as UserSchema
 
-SECRET_KEY = "your-secret-key"  # Change to env var in production
+SECRET_KEY = os.environ.get("SECRET_KEY", "aip-secret-key-change-in-production-2024")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -50,7 +51,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-    user = db.query(UserModel).filter(UserModel.email == username).first()
+    user = db.query(UserModel).filter(UserModel.id == int(username)).first()
     if user is None:
         raise credentials_exception
     return user

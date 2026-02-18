@@ -43,6 +43,11 @@ def health_check():
 def ping():
     return {"pong": True}
 
+@app.get("/favicon.ico")
+def favicon():
+    from fastapi.responses import Response
+    return Response(status_code=204)
+
 @app.on_event("startup")
 def on_startup():
     Base.metadata.create_all(bind=engine)

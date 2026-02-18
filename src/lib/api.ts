@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Production API URL - hardcoded to avoid environment variable issues
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://aip-llcz.onrender.com';
+// Production API URL - PythonAnywhere
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://sackson.pythonanywhere.com';
 
 const api = axios.create({
   baseURL: API_BASE_URL,

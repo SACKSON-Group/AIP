@@ -1,6 +1,9 @@
 """
 WSGI entry point for PythonAnywhere deployment.
 PythonAnywhere requires a WSGI application, so we use a2wsgi to wrap FastAPI.
+
+IMPORTANT: On PythonAnywhere, edit the WSGI config file directly
+(Web -> WSGI configuration file) and copy content from pythonanywhere_wsgi_template.py
 """
 import sys
 import os
@@ -10,21 +13,23 @@ project_home = os.path.dirname(os.path.abspath(__file__))
 if project_home not in sys.path:
     sys.path.insert(0, project_home)
 
-# PythonAnywhere PostgreSQL configuration
-# Set DATABASE_URL in the PythonAnywhere WSGI config file or .env file
-# Format: postgresql+psycopg2://user:password@host:port/database
-# Example: postgresql+psycopg2://super:PASSWORD@sackson-5021.postgres.pythonanywhere-services.com:15021/postgres
+# IMPORTANT: Set environment variables BEFORE importing backend
+# These will be overridden by PythonAnywhere WSGI config or .env file
+# Load .env file first if it exists
+try:
+    from dotenv import load_dotenv
+    env_path = os.path.join(project_home, '.env')
+    if os.path.exists(env_path):
+        load_dotenv(env_path)
+except ImportError:
+    pass
 
-# Load .env file if exists
-from dotenv import load_dotenv
-env_path = os.path.join(project_home, '.env')
-if os.path.exists(env_path):
-    load_dotenv(env_path)
+# Fallback to SQLite if no DATABASE_URL is set (for local testing)
+if 'SQLALCHEMY_DATABASE_URL' not in os.environ:
+    db_path = os.path.join(project_home, 'backend', 'aip_platform.db')
+    os.environ['SQLALCHEMY_DATABASE_URL'] = f'sqlite:///{db_path}'
 
-# Environment variables should be set in PythonAnywhere or .env file:
-# - SQLALCHEMY_DATABASE_URL: PostgreSQL connection string
-# - SECRET_KEY: JWT secret key for authentication
-
+# Import the FastAPI app AFTER setting environment variables
 from backend.main import app
 
 # For PythonAnywhere WSGI - use a2wsgi to wrap FastAPI ASGI app

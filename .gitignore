@@ -77,3 +77,6 @@ frontend/out/
 
 # SQLite database
 *.db
+
+# PythonAnywhere WSGI config with credentials
+pythonanywhere_wsgi.py

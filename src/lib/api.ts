@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// Production API URL - PythonAnywhere
+// API URL - set NEXT_PUBLIC_API_URL in Vercel environment variables
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://sackson.pythonanywhere.com';
 
 const api = axios.create({

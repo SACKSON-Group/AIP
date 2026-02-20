@@ -6,7 +6,9 @@ import { dataRoomsApi, projectsApi, DataRoom, Project } from '../../../lib/api';
 
 interface DataRoomFormData {
   project_id: number;
-  nda_required: boolean;
+  name: string;
+  description?: string;
+  require_nda: boolean;
 }
 
 export default function DataRoomsPage() {
@@ -41,9 +43,9 @@ export default function DataRoomsPage() {
     try {
       await dataRoomsApi.create({
         project_id: Number(data.project_id),
-        nda_required: data.nda_required,
-        access_users: [],
-        documents: {},
+        name: data.name,
+        description: data.description,
+        require_nda: data.require_nda,
       });
       setShowModal(false);
       reset();
@@ -84,7 +86,7 @@ export default function DataRoomsPage() {
                   <div className="p-3 bg-purple-100 rounded-lg">
                     <DatabaseIcon className="w-6 h-6 text-purple-600" />
                   </div>
-                  {room.nda_required && (
+                  {room.require_nda && (
                     <span className="px-2 py-1 text-xs bg-orange-100 text-orange-800 rounded-full">
                       NDA Required
                     </span>
@@ -92,7 +94,7 @@ export default function DataRoomsPage() {
                 </div>
 
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {getProjectName(room.project_id)}
+                  {room.name || getProjectName(room.project_id)}
                 </h3>
 
                 <div className="space-y-2 text-sm text-gray-600">
@@ -143,6 +145,17 @@ export default function DataRoomsPage() {
             </div>
             <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                <input
+                  {...register('name', { required: 'Name is required' })}
+                  type="text"
+                  placeholder="Enter data room name"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+                {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Project *</label>
                 <select
                   {...register('project_id', { required: 'Project is required' })}
@@ -154,15 +167,25 @@ export default function DataRoomsPage() {
                 {errors.project_id && <p className="text-red-500 text-sm mt-1">{errors.project_id.message}</p>}
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  {...register('description')}
+                  placeholder="Enter description (optional)"
+                  rows={3}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
               <div className="flex items-center gap-3">
                 <input
-                  {...register('nda_required')}
+                  {...register('require_nda')}
                   type="checkbox"
-                  id="nda_required"
+                  id="require_nda"
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   defaultChecked
                 />
-                <label htmlFor="nda_required" className="text-sm text-gray-700">
+                <label htmlFor="require_nda" className="text-sm text-gray-700">
                   Require NDA before access
                 </label>
               </div>
@@ -206,7 +229,7 @@ export default function DataRoomsPage() {
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <p className="text-sm text-gray-500">NDA Status</p>
                   <p className="font-medium text-gray-900">
-                    {selectedRoom.nda_required ? 'Required' : 'Not Required'}
+                    {selectedRoom.require_nda ? 'Required' : 'Not Required'}
                   </p>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-lg">

@@ -271,14 +271,20 @@ export interface Introduction extends IntroductionCreate {
 
 export interface DataRoomCreate {
   project_id: number;
-  nda_required?: boolean;
-  access_users?: number[];
-  documents?: Record<string, string>;
+  name: string;
+  description?: string;
+  require_nda?: boolean;
+  require_verification?: boolean;
+  min_verification_level?: string;
+  enable_watermark?: boolean;
+  allow_download?: boolean;
+  allow_print?: boolean;
 }
 
 export interface DataRoom extends DataRoomCreate {
   id: number;
   created_at: string;
+  status?: string;
 }
 
 export interface AnalyticReportCreate {

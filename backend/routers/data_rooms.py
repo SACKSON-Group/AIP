@@ -19,7 +19,7 @@ from backend.services.ai_service import ai_service, DocumentAnalysisType
 from pydantic import BaseModel
 
 
-router = APIRouter(prefix="/data-rooms-v2", tags=["data-rooms-v2"])
+router = APIRouter(prefix="/data-rooms", tags=["data-rooms"])
 
 
 # ============================================================================

@@ -11,10 +11,13 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [filter, setFilter] = useState({ sector: '', country: '', stage: '' });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ProjectCreate>();
+  const { register: registerEdit, handleSubmit: handleSubmitEdit, reset: resetEdit, setValue: setEditValue, formState: { errors: editErrors } } = useForm<ProjectCreate>();
 
   const fetchProjects = async () => {
     try {
@@ -43,6 +46,40 @@ export default function ProjectsPage() {
       fetchProjects();
     } catch (error) {
       console.error('Failed to create project:', error);
+    }
+  };
+
+  const handleEditProject = (project: Project) => {
+    setEditingProject(project);
+    // Set form values
+    Object.entries(project).forEach(([key, value]) => {
+      if (value !== null && value !== undefined) {
+        setEditValue(key as keyof ProjectCreate, value);
+      }
+    });
+    setShowEditModal(true);
+  };
+
+  const onEditSubmit = async (data: ProjectCreate) => {
+    if (!editingProject) return;
+    try {
+      await projectsApi.update(editingProject.id, data);
+      setShowEditModal(false);
+      setEditingProject(null);
+      resetEdit();
+      fetchProjects();
+    } catch (error) {
+      console.error('Failed to update project:', error);
+    }
+  };
+
+  const handleDeleteProject = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this project?')) return;
+    try {
+      await projectsApi.delete(id);
+      fetchProjects();
+    } catch (error) {
+      console.error('Failed to delete project:', error);
     }
   };
 
@@ -135,12 +172,24 @@ export default function ProjectsPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-gray-900">
                       {project.funding_gap ? `$${formatNumber(project.funding_gap)}` : '-'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <td className="px-6 py-4 whitespace-nowrap text-right space-x-2">
                       <button
                         onClick={() => setSelectedProject(project)}
                         className="text-blue-600 hover:text-blue-800"
                       >
                         View
+                      </button>
+                      <button
+                        onClick={() => handleEditProject(project)}
+                        className="text-green-600 hover:text-green-800"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteProject(project.id)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        Delete
                       </button>
                     </td>
                   </tr>

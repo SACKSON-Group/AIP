@@ -23,11 +23,25 @@ def _get_level_enum(level_str: str) -> models.VerificationLevel:
 def _deserialize_verification(db_v: models.Verification) -> Verification:
     """Convert database model to Pydantic model."""
     level_val = db_v.level.value if hasattr(db_v.level, 'value') else str(db_v.level)
+
+    # Reconstruct bankability from stored fields
+    bankability = None
+    if db_v.overall_score is not None:
+        bankability = {
+            "technical_readiness": db_v.technical_readiness or 0,
+            "financial_robustness": db_v.financial_robustness or 0,
+            "legal_clarity": db_v.legal_clarity or 0,
+            "esg_compliance": db_v.esg_compliance or 0,
+            "overall_score": db_v.overall_score or 0,
+            "risk_flags": db_v.risk_flags.split(",") if db_v.risk_flags else [],
+            "last_verified": db_v.last_verified or ""
+        }
+
     return Verification(
         id=db_v.id,
         project_id=db_v.project_id,
         level=level_val,
-        bankability=None  # Simplified - could reconstruct from individual fields
+        bankability=bankability
     )
 
 

@@ -3,22 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-
-// API URL - auto-detect localhost for development
-const getApiUrl = () => {
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL;
-  }
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return 'http://localhost:8000';
-    }
-  }
-  return 'https://web-production-8e81a.up.railway.app';
-};
-
-const API_URL = getApiUrl();
+import api, { projectsApi } from '../../../lib/api';
 
 interface DealRoom {
   id: number;
@@ -66,14 +51,8 @@ export default function DealRoomsPage() {
 
   const fetchDealRooms = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/deal-rooms/`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setDealRooms(data);
-      }
+      const response = await api.get('/deal-rooms/');
+      setDealRooms(response.data);
     } catch (error) {
       console.error('Failed to fetch deal rooms:', error);
     } finally {
@@ -83,14 +62,8 @@ export default function DealRoomsPage() {
 
   const fetchProjects = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/projects/`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setProjects(data);
-      }
+      const data = await projectsApi.list();
+      setProjects(data);
     } catch (error) {
       console.error('Failed to fetch projects:', error);
     }
@@ -99,7 +72,6 @@ export default function DealRoomsPage() {
   const handleCreateDealRoom = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
       const payload = {
         ...newDealRoom,
         project_id: Number(newDealRoom.project_id),
@@ -107,29 +79,19 @@ export default function DealRoomsPage() {
         target_close_date: newDealRoom.target_close_date || null
       };
 
-      const response = await fetch(`${API_URL}/deal-rooms/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
+      await api.post('/deal-rooms/', payload);
+      setShowCreateModal(false);
+      setNewDealRoom({
+        project_id: 0,
+        name: '',
+        description: '',
+        deal_value: '',
+        target_close_date: '',
+        require_nda: true,
+        is_video_enabled: true,
+        is_chat_enabled: true
       });
-
-      if (response.ok) {
-        setShowCreateModal(false);
-        setNewDealRoom({
-          project_id: 0,
-          name: '',
-          description: '',
-          deal_value: '',
-          target_close_date: '',
-          require_nda: true,
-          is_video_enabled: true,
-          is_chat_enabled: true
-        });
-        fetchDealRooms();
-      }
+      fetchDealRooms();
     } catch (error) {
       console.error('Failed to create deal room:', error);
     }

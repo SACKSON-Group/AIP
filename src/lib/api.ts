@@ -1,7 +1,25 @@
 import axios from 'axios';
 
-// API URL - set NEXT_PUBLIC_API_URL in Vercel environment variables
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://sackson.pythonanywhere.com';
+// API URL configuration
+// In development (localhost), use local backend
+// In production, use NEXT_PUBLIC_API_URL env variable
+const getApiUrl = () => {
+  // If env variable is set, use it
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  // In browser, check if we're on localhost
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:8000';
+    }
+  }
+  // Default for production
+  return 'https://web-production-8e81a.up.railway.app';
+};
+
+const API_BASE_URL = getApiUrl();
 
 const api = axios.create({
   baseURL: API_BASE_URL,

@@ -84,6 +84,14 @@ export const projectsApi = {
     const response = await api.post('/projects/', project);
     return response.data;
   },
+  update: async (id: number, project: Partial<ProjectCreate>) => {
+    const response = await api.put(`/projects/${id}`, project);
+    return response.data;
+  },
+  delete: async (id: number) => {
+    const response = await api.delete(`/projects/${id}`);
+    return response.data;
+  },
 };
 
 // Investors API

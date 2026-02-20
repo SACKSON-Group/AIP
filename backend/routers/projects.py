@@ -2,10 +2,12 @@
 import json
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from backend.schemas import Project, ProjectCreate
 from backend.database import get_db
 from backend import models
+from backend.auth import get_current_user
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -121,3 +123,73 @@ def list_projects(
 
     db_projects = query.offset(skip).limit(limit).all()
     return [_deserialize_project(p) for p in db_projects]
+
+
+class ProjectUpdate(BaseModel):
+    """Schema for updating a project - all fields optional."""
+    name: Optional[str] = None
+    sector: Optional[str] = None
+    country: Optional[str] = None
+    region: Optional[str] = None
+    gps_location: Optional[str] = None
+    stage: Optional[str] = None
+    estimated_capex: Optional[float] = None
+    funding_gap: Optional[float] = None
+    timeline_fid: Optional[str] = None
+    timeline_cod: Optional[str] = None
+    revenue_model: Optional[str] = None
+    offtaker: Optional[str] = None
+    tariff_mechanism: Optional[str] = None
+    concession_length: Optional[int] = None
+    fx_exposure: Optional[str] = None
+    political_risk_mitigation: Optional[str] = None
+    sovereign_support: Optional[str] = None
+    technology: Optional[str] = None
+    epc_status: Optional[str] = None
+    land_acquisition_status: Optional[str] = None
+    esg_category: Optional[str] = None
+    permits_status: Optional[str] = None
+
+
+@router.put("/{project_id}", response_model=Project)
+def update_project(
+    project_id: int,
+    project_update: ProjectUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Update a project (requires authentication)."""
+    db_project = db.query(models.Project).filter(models.Project.id == project_id).first()
+    if db_project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Update fields that are provided
+    update_data = project_update.model_dump(exclude_unset=True)
+
+    for field, value in update_data.items():
+        if value is not None:
+            if field == "sector":
+                value = _get_sector_enum(value)
+            elif field == "stage":
+                value = _get_stage_enum(value)
+            setattr(db_project, field, value)
+
+    db.commit()
+    db.refresh(db_project)
+    return _deserialize_project(db_project)
+
+
+@router.delete("/{project_id}")
+def delete_project(
+    project_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Delete a project (requires authentication)."""
+    db_project = db.query(models.Project).filter(models.Project.id == project_id).first()
+    if db_project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    db.delete(db_project)
+    db.commit()
+    return {"message": "Project deleted successfully"}

@@ -158,7 +158,7 @@ class MessageResponse(BaseModel):
 # DEAL ROOM CRUD ENDPOINTS
 # ============================================================================
 
-@router.get("", response_model=List[DealRoomResponse])
+@router.get("/", response_model=List[DealRoomResponse])
 def list_deal_rooms(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, le=100),
@@ -201,7 +201,7 @@ def list_deal_rooms(
     return result
 
 
-@router.post("", response_model=DealRoomResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=DealRoomResponse, status_code=status.HTTP_201_CREATED)
 def create_deal_room(
     deal_room_in: DealRoomCreate,
     db: Session = Depends(get_db)

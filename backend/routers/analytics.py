@@ -42,6 +42,13 @@ def _deserialize_report(db_report: models.AnalyticReport) -> AnalyticReport:
     )
 
 
+@router.get("/", response_model=list[AnalyticReport])
+def list_reports(db: Session = Depends(get_db)):
+    """List all analytic reports."""
+    db_reports = db.query(models.AnalyticReport).all()
+    return [_deserialize_report(r) for r in db_reports]
+
+
 @router.post("/", response_model=AnalyticReport)
 def create(report: AnalyticReportCreate, db: Session = Depends(get_db)):
     """Create a new analytic report."""

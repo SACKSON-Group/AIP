@@ -59,3 +59,50 @@ def read(investor_id: int, db: Session = Depends(get_db)):
     if db_inv is None:
         raise HTTPException(status_code=404, detail="Investor not found")
     return _deserialize_investor(db_inv)
+
+
+@router.get("/{investor_id}/match")
+def match_investor(investor_id: int, db: Session = Depends(get_db)):
+    """Match an investor with compatible projects based on sector and ticket size."""
+    db_inv = db.query(models.Investor).filter(models.Investor.id == investor_id).first()
+    if db_inv is None:
+        raise HTTPException(status_code=404, detail="Investor not found")
+
+    investor = _deserialize_investor(db_inv)
+    all_projects = db.query(models.Project).all()
+
+    matched = []
+    for project in all_projects:
+        score = 0
+        reasons = []
+
+        # Sector match
+        project_sector = project.sector.value if hasattr(project.sector, 'value') else str(project.sector)
+        if project_sector in investor.sector_focus:
+            score += 40
+            reasons.append(f"Sector match: {project_sector}")
+
+        # Country match
+        if project.country in investor.country_focus:
+            score += 30
+            reasons.append(f"Country match: {project.country}")
+
+        # Ticket size match
+        if project.estimated_capex:
+            if investor.ticket_size_min <= project.estimated_capex <= investor.ticket_size_max:
+                score += 30
+                reasons.append(f"CAPEX within ticket range")
+
+        if score > 0:
+            matched.append({
+                "project_id": project.id,
+                "project_name": project.name,
+                "country": project.country,
+                "sector": project_sector,
+                "estimated_capex": project.estimated_capex,
+                "match_score": score,
+                "match_reasons": reasons
+            })
+
+    matched.sort(key=lambda x: x["match_score"], reverse=True)
+    return {"investor_id": investor_id, "matches": matched}

@@ -1,14 +1,17 @@
 # Nixpacks configuration for Railway
-# Only deploy Python backend (frontend is on Vercel)
+# Force Python-only deployment (frontend is on Vercel)
+
+providers = ["python"]
 
 [phases.setup]
-nixPkgs = ["python311", "postgresql"]
+nixPkgs = ["python311", "gcc", "libffi", "openssl"]
+aptPkgs = ["libpq-dev"]
 
 [phases.install]
-cmds = ["pip install -r requirements.txt"]
+cmds = ["pip install --upgrade pip", "pip install -r requirements.txt"]
 
 [phases.build]
 cmds = []
 
 [start]
-cmd = "uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}"
+cmd = "python -m uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}"

@@ -27,8 +27,5 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Expose port
 EXPOSE 8000
 
-# Default port (Railway sets PORT env var)
-ENV PORT=8000
-
-# Start command - uses shell form to expand $PORT
-CMD uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+# Start command - use shell form with explicit /bin/sh
+CMD ["/bin/sh", "-c", "uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

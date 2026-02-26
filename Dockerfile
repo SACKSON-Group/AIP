@@ -1,33 +1,29 @@
-# Dockerfile for Railway deployment (Python backend only)
+# Dockerfile for Azure Container Apps deployment (Python backend)
 FROM python:3.11-slim
 
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies for psycopg2
+# Environment flags
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PORT=8000
+
+# Install system dependencies (needed for psycopg2)
 RUN apt-get update && apt-get install -y \
-    libpq-dev \
     gcc \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy only Python requirements first (for caching)
+# Install Python dependencies first (layer caching = faster rebuilds)
 COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
-
-# Copy backend code and start script
+# Copy application code
 COPY backend/ ./backend/
-COPY start.sh .
-RUN chmod +x start.sh
-
-# Set environment variables
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1
 
 # Expose port
 EXPOSE 8000
 
-# Start using shell script
-CMD ["./start.sh"]
+# Production startup: gunicorn + uvicorn workers
+CMD ["bash", "-lc", "gunicorn -k uvicorn.workers.UvicornWorker -w 2 -b 0.0.0.0:${PORT} backend.main:app"]

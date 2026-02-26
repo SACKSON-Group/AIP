@@ -80,3 +80,15 @@ frontend/out/
 
 # PythonAnywhere WSGI config with credentials
 pythonanywhere_wsgi.py
+
+# Additional Python
+*.egg-info/
+dist/
+build/
+.Python
+
+# Docker
+*.log
+
+# Logs
+logs/

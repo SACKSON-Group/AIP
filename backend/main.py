@@ -1,6 +1,14 @@
 # main.py
+import os
+import sys
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from backend.models import Base
 from backend.routers.projects import router as projects_router
 from backend.routers.verifications import router as verifications_router
@@ -12,22 +20,27 @@ from backend.routers.events import router as events_router
 from backend.routers.auth import router as auth_router
 from backend.routers.deal_rooms import router as deal_rooms_router
 from backend.routers.verification import router as verification_v2_router
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from backend.database import engine
-from pathlib import Path
-from fastapi.staticfiles import StaticFiles
 
-# Create FastAPI app first
-app = FastAPI(title="AIP API", version="1.0")
+# Create FastAPI app
+app = FastAPI(
+    title="AIP API",
+    version="1.0.0"
+)
 
-# Configure CORS - allow all origins for production
+# CORS configuration from environment variable
+allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "")
+allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",") if origin.strip()]
+
+# Fallback for local development
+if not allowed_origins:
+    allowed_origins = ["http://localhost:3000", "http://localhost:3001", "*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["*"],
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -37,7 +50,7 @@ def root():
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy"}
+    return {"status": "healthy", "service": "aip-api"}
 
 @app.get("/ping")
 def ping():
@@ -69,7 +82,8 @@ app.include_router(auth_router)
 app.include_router(deal_rooms_router)
 app.include_router(verification_v2_router)
 
-# Rest of main.py (auth dependencies, etc.)
+# Run with uvicorn
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run("backend.main:app", host="0.0.0.0", port=port, reload=False)

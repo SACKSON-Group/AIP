@@ -29,7 +29,16 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: str = "http://localhost:3000,http://localhost:8000"
 
-    # AWS S3
+    # Supabase
+    SUPABASE_URL: str = ""
+    SUPABASE_ANON_KEY: str = ""
+    SUPABASE_SERVICE_ROLE_KEY: str = ""
+
+    # Azure Storage (for file uploads)
+    AZURE_STORAGE_CONNECTION_STRING: Optional[str] = None
+    AZURE_STORAGE_CONTAINER_NAME: str = "aip-uploads"
+
+    # AWS S3 (legacy)
     S3_BUCKET: str = ""
     S3_REGION: str = "us-east-1"
     S3_ACCESS_KEY: str = ""

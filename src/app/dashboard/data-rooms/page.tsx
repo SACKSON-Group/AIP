@@ -250,7 +250,7 @@ export default function DataRoomsPage() {
                           <DocumentIcon className="w-5 h-5 text-gray-400" />
                           <span className="text-gray-900">{name}</span>
                         </div>
-                        <a href={url} className="text-blue-600 hover:text-blue-700 text-sm">
+                        <a href={String(url)} className="text-blue-600 hover:text-blue-700 text-sm">
                           Download
                         </a>
                       </div>

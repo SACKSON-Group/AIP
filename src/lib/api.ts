@@ -309,6 +309,8 @@ export interface DataRoom extends DataRoomCreate {
   id: number;
   created_at: string;
   status?: string;
+  documents?: Record<string, unknown>;
+  access_users?: string[];
 }
 
 export interface DealRoomCreateInput {

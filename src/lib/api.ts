@@ -166,6 +166,22 @@ export const dataRoomsApi = {
   },
 };
 
+// Deal Rooms API
+export const dealRoomsApi = {
+  list: async () => {
+    const response = await api.get('/deal-rooms/');
+    return response.data;
+  },
+  get: async (id: number) => {
+    const response = await api.get(`/deal-rooms/${id}`);
+    return response.data;
+  },
+  create: async (dealRoom: DealRoomCreateInput) => {
+    const response = await api.post('/deal-rooms/', dealRoom);
+    return response.data;
+  },
+};
+
 // Analytics API
 export const analyticsApi = {
   list: async () => {
@@ -293,6 +309,18 @@ export interface DataRoom extends DataRoomCreate {
   id: number;
   created_at: string;
   status?: string;
+}
+
+export interface DealRoomCreateInput {
+  project_id: number;
+  name: string;
+  description?: string;
+  deal_value?: number | null;
+  deal_currency?: string;
+  target_close_date?: string | null;
+  is_video_enabled?: boolean;
+  is_chat_enabled?: boolean;
+  require_nda?: boolean;
 }
 
 export interface AnalyticReportCreate {

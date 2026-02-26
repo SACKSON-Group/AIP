@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import api, { projectsApi } from '../../../lib/api';
+import { projectsApi, dealRoomsApi } from '../../../lib/api';
 
 interface DealRoom {
   id: number;
@@ -32,6 +32,7 @@ export default function DealRoomsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [newDealRoom, setNewDealRoom] = useState({
     project_id: 0,
     name: '',
@@ -51,8 +52,8 @@ export default function DealRoomsPage() {
 
   const fetchDealRooms = async () => {
     try {
-      const response = await api.get('/deal-rooms/');
-      setDealRooms(response.data);
+      const data = await dealRoomsApi.list();
+      setDealRooms(data);
     } catch (error) {
       console.error('Failed to fetch deal rooms:', error);
     } finally {
@@ -71,15 +72,31 @@ export default function DealRoomsPage() {
 
   const handleCreateDealRoom = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
+    // Validate project selection
+    if (!newDealRoom.project_id || newDealRoom.project_id === 0) {
+      setError('Please select a project');
+      return;
+    }
+    if (!newDealRoom.name.trim()) {
+      setError('Please enter a deal room name');
+      return;
+    }
+
     try {
       const payload = {
-        ...newDealRoom,
         project_id: Number(newDealRoom.project_id),
-        deal_value: newDealRoom.deal_value ? Number(newDealRoom.deal_value) : null,
-        target_close_date: newDealRoom.target_close_date || null
+        name: newDealRoom.name,
+        description: newDealRoom.description || undefined,
+        deal_value: newDealRoom.deal_value ? Number(newDealRoom.deal_value) : undefined,
+        target_close_date: newDealRoom.target_close_date || undefined,
+        require_nda: newDealRoom.require_nda,
+        is_video_enabled: newDealRoom.is_video_enabled,
+        is_chat_enabled: newDealRoom.is_chat_enabled
       };
 
-      await api.post('/deal-rooms/', payload);
+      await dealRoomsApi.create(payload);
       setShowCreateModal(false);
       setNewDealRoom({
         project_id: 0,
@@ -92,8 +109,10 @@ export default function DealRoomsPage() {
         is_chat_enabled: true
       });
       fetchDealRooms();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to create deal room:', error);
+      const axiosError = error as { response?: { data?: { detail?: string } } };
+      setError(axiosError.response?.data?.detail || 'Failed to create deal room');
     }
   };
 
@@ -235,12 +254,17 @@ export default function DealRoomsPage() {
           <div className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">Create New Deal Room</h2>
-              <button onClick={() => setShowCreateModal(false)} className="text-gray-500 hover:text-gray-700">
+              <button onClick={() => { setShowCreateModal(false); setError(null); }} className="text-gray-500 hover:text-gray-700">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
+            {error && (
+              <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                {error}
+              </div>
+            )}
 
             <form onSubmit={handleCreateDealRoom} className="space-y-4">
               <div>

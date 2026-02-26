@@ -17,8 +17,10 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy backend code only
+# Copy backend code and start script
 COPY backend/ ./backend/
+COPY start.sh .
+RUN chmod +x start.sh
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
@@ -27,5 +29,5 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Expose port
 EXPOSE 8000
 
-# Start command - use shell form with explicit /bin/sh
-CMD ["/bin/sh", "-c", "uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Start using shell script
+CMD ["./start.sh"]

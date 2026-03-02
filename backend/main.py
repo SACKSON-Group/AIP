@@ -63,7 +63,11 @@ def favicon():
 
 @app.on_event("startup")
 def on_startup():
-    Base.metadata.create_all(bind=engine)
+    try:
+        Base.metadata.create_all(bind=engine)
+        print("Database tables initialized successfully")
+    except Exception as e:
+        print(f"Database initialization warning (non-fatal): {e}")
 
 # Mount static files after app is created
 _static_dir = Path(__file__).parent / "static"

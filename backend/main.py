@@ -19,6 +19,7 @@ from backend.routers.analytics import router as analytics_router
 from backend.routers.events import router as events_router
 from backend.routers.auth import router as auth_router
 from backend.routers.deal_rooms import router as deal_rooms_router
+from backend.routers.airtable import router as airtable_router
 from backend.routers.verification import router as verification_v2_router
 from backend.database import engine
 
@@ -85,6 +86,7 @@ app.include_router(events_router)
 app.include_router(auth_router)
 app.include_router(deal_rooms_router)
 app.include_router(verification_v2_router)
+app.include_router(airtable_router)
 
 # Run with uvicorn
 if __name__ == "__main__":

@@ -14,20 +14,17 @@ from app.routers import (
     verifications_router,
     investors_router,
     dealrooms_router,
+    events_router,
 )
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan handler for startup/shutdown events."""
-    # Startup: Create database tables
     Base.metadata.create_all(bind=engine)
     yield
-    # Shutdown: Cleanup if needed
-    pass
 
 
-# Create FastAPI application
 app = FastAPI(
     title=settings.APP_NAME,
     description="African Infrastructure Projects Platform - Connecting projects with investors",
@@ -55,6 +52,7 @@ app.include_router(documents_router)
 app.include_router(verifications_router)
 app.include_router(investors_router)
 app.include_router(dealrooms_router)
+app.include_router(events_router)
 
 
 @app.get("/")
@@ -74,12 +72,6 @@ def health_check():
     return {"status": "healthy"}
 
 
-# For running with uvicorn directly
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(
-        "app.main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=settings.is_development,
-    )
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000)

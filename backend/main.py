@@ -1,4 +1,4 @@
-# main.py
+# main.py - deploy trigger
 import os
 import sys
 from pathlib import Path

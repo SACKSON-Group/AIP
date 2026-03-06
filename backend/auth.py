@@ -1,6 +1,7 @@
 # auth.py - supports both Supabase JWTs and internal AIP JWTs
 import os
 import bcrypt
+import httpx
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from fastapi import Depends, HTTPException, status
@@ -16,34 +17,27 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "aip-secret-key-change-in-production-2
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-# Supabase JWT secret for verifying frontend tokens
-SUPABASE_JWT_SECRET = os.environ.get("SUPABASE_JWT_SECRET", "")
+# Supabase credentials for verifying frontend tokens via API
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 http_bearer = HTTPBearer(auto_error=False)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a password against a hash using bcrypt directly."""
-    truncated = (plain_password[:72] if plain_password else "").encode('utf-8')
-    return bcrypt.checkpw(truncated, hashed_password.encode('utf-8'))
+    return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
 
 
 def get_password_hash(password: str) -> str:
-    """Hash a password using bcrypt directly."""
-    truncated = (password[:72] if password else "").encode('utf-8')
-    return bcrypt.hashpw(truncated, bcrypt.gensalt()).decode('utf-8')
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
-    else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
 async def get_current_user(
@@ -55,44 +49,38 @@ async def get_current_user(
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-
     if not credentials:
         raise credentials_exception
-
     token = credentials.credentials
 
-    # 1. Try Supabase JWT first (frontend sends these)
-    if SUPABASE_JWT_SECRET:
+    # 1. Try Supabase API verification (reliable, no JWT secret encoding issues)
+    if SUPABASE_URL and SUPABASE_ANON_KEY:
         try:
-            payload = jwt.decode(
-                token,
-                SUPABASE_JWT_SECRET,
-                algorithms=[ALGORITHM],
-                options={"verify_aud": False}
-            )
-            email = payload.get("email")
-            sub = payload.get("sub")
-
-            if email or sub:
-                # Try to find local user by email
-                user = None
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"{SUPABASE_URL}/auth/v1/user",
+                    headers={
+                        "Authorization": f"Bearer {token}",
+                        "apikey": SUPABASE_ANON_KEY,
+                    },
+                    timeout=5.0,
+                )
+            if response.status_code == 200:
+                user_data = response.json()
+                email = user_data.get("email")
                 if email:
                     user = db.query(UserModel).filter(UserModel.email == email).first()
+                    if user:
+                        return user
+                    # User exists in Supabase but not in local DB — create transient user object
+                    transient_user = UserModel()
+                    transient_user.email = email
+                    transient_user.role = "user"
+                    return transient_user
+        except Exception:
+            pass  # Fall through to legacy JWT check
 
-                if user:
-                    return user
-
-                # User authenticated via Supabase but not in local DB yet
-                # Create a transient user object so endpoint can proceed
-                transient_user = UserModel()
-                transient_user.email = email or sub
-                transient_user.role = "user"
-                return transient_user
-
-        except JWTError:
-            pass  # Fall through to try internal JWT
-
-    # 2. Try internal AIP JWT (legacy / server-issued tokens)
+    # 2. Fall back to legacy internal AIP JWT
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
@@ -100,18 +88,14 @@ async def get_current_user(
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-
     try:
         user = db.query(UserModel).filter(UserModel.id == int(username)).first()
     except (ValueError, TypeError):
         user = db.query(UserModel).filter(UserModel.email == username).first()
-
     if user is None:
         raise credentials_exception
     return user
 
 
-async def get_current_admin(current_user: UserModel = Depends(get_current_user)):
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Admin access required")
+async def get_current_active_user(current_user: UserModel = Depends(get_current_user)):
     return current_user

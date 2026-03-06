@@ -68,15 +68,28 @@ async def get_current_user(
             if response.status_code == 200:
                 user_data = response.json()
                 email = user_data.get("email")
+                supabase_uuid = user_data.get("id", "")
+                full_name = (user_data.get("user_metadata") or {}).get("full_name", "")
                 if email:
+                    # Try to find user in local DB by email
                     user = db.query(UserModel).filter(UserModel.email == email).first()
                     if user:
                         return user
-                    # User exists in Supabase but not in local DB — create transient user object
-                    transient_user = UserModel()
-                    transient_user.email = email
-                    transient_user.role = "user"
-                    return transient_user
+                    # User exists in Supabase but not in local DB — create them so
+                    # write operations (created_by_id, etc.) have a valid integer ID.
+                    new_user = UserModel(
+                        uuid=supabase_uuid or email,
+                        email=email,
+                        password_hash="",  # Supabase handles authentication
+                        full_name=full_name or None,
+                        is_email_verified=True,
+                        is_phone_verified=False,
+                        status="active",
+                    )
+                    db.add(new_user)
+                    db.commit()
+                    db.refresh(new_user)
+                    return new_user
         except Exception:
             pass  # Fall through to legacy JWT check
 

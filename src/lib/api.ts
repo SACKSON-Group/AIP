@@ -28,6 +28,7 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
 // Add auth token to requests (Supabase)
 api.interceptors.request.use(async (config) => {
   if (typeof window !== 'undefined') {
@@ -44,8 +45,14 @@ api.interceptors.response.use(
   async (error) => {
     if (error.response?.status === 401) {
       if (typeof window !== 'undefined') {
-        await supabase.auth.signOut();
-        window.location.href = '/login';
+        // Only sign out if the user's session is genuinely expired/missing.
+        // Don't sign out on authorization errors (e.g. insufficient permissions)
+        // where the session itself is still valid.
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          await supabase.auth.signOut();
+          window.location.href = '/login';
+        }
       }
     }
     return Promise.reject(error);

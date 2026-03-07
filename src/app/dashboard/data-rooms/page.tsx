@@ -7,7 +7,7 @@ import { dataRoomsApi, projectsApi, DataRoom, Project } from '../../../lib/api';
 interface DataRoomFormData {
   project_id: number;
   name: string;
-  description?: string;
+  description?: string
   require_nda: boolean;
 }
 
@@ -22,12 +22,12 @@ export default function DataRoomsPage() {
 
   const fetchData = async () => {
     try {
-      const [roomsData, projectsData] = await Promise.all([
-        dataRoomsApi.list(),
-        projectsApi.list(),
-      ]);
-      setDataRooms(roomsData);
-      setProjects(projectsData);
+const [roomsResult, projectsResult] = await Promise.allSettled([
+            dataRoomsApi.list(),
+            projectsApi.list(),
+          ]);
+              if (roomsResult.status === 'fulfilled') setDataRooms(roomsResult.value);
+              if (projectsResult.status === 'fulfilled') setProjects(projectsResult.value);
     } catch (error) {
       console.error('Failed to fetch data:', error);
     } finally {
